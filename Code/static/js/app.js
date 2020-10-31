@@ -1,94 +1,104 @@
 // console.log the data
-d3.json("samples.json").then((importedData) => {
-    // console.log(importedData);
-    console.log(importedData.column_names)
-});
+
 
 // Initialize page with default plot 15.3 activity 2
 function init() {
-    data = [{
-        x:[],
-        y: []}]
-
-    var CHART = d3.selectAll("#bar").node();
-
-    Plotly.newPlot(CHART,data);
+    var selData = d3.select("#selDataset")
+    d3.json("samples.json").then((importedData) => {
+        // console.log(importedData);
+        console.log(importedData.names)
+        importedData.names.forEach((name) => {
+            selData.append("Option").text(name).property("value")
+        })
+    optionChanged(importedData.names[0])
+    });
 };
 
-// Call updatePlotly() when a change takes place to the DOM
-d3.selectAll("body").on("change", updatePlotly);
+init();
 
-// create function called when a dropdown menu item is selected
-function updatePlotly() {
-    // prevent the page from refreshing
-    d3.event.preventDefault();
-   
-    // Use D3 to select the dropdown menu
-    var dropdownMenu = d3.select("#selDataset");
+function optionChanged(userData) {
+    demoData(userData);
+    Charts(userData);
+};
 
-    // Assign the value of the dropdown menu option to a variable
-    var id = dropdownMenu.node().value;
-    console.log(idData);
-
-    // clear the input value
-    d3.select("#selDataset").node().value = "";
-
-    // build plot with selected id data
-    buildPlot(id)
-}
+function demoData(userData) {
+    d3.json("samples.json").then((data) => {
+    console.log(data.metadata)
+    var filterData = data.metadata.filter(md => md.id == userData)
+    var firstElement = filterData[0]
+    var sampleData = d3.select("#sample-metadata")
+    sampleData.html("")
+    Object.entries(firstElement).forEach(([key, value]) => {
+        dataRow = sampleData.append("p")
+        dataRow.text(`${key}: ${value}`)
+    });
+    });
+};
 
 //Module 15.3 activities 3, 7
-function buildPlot(id) {
+function Charts(userData) {
 // Use the D3 library to read in samples.json.
     d3.json("samples.json").then((importedData) => {
 
-        // var name = data.dataset.name;
+        var samples = importedData.samples;
 
-//         // grab values from data file
-//         data[id].map(row => row.sample_values)
+        // grab values from data file
+        var sampleFiltered = samples.filter(samples => samples.id == userData)
+        var firstElement = sampleFiltered[0]
+        var sampleOTUID = firstElement.otu_ids.map(sampleID => `OTU ${sampleID}`).slice(0,10).reverse()
+        var sampleValues = firstElement.sample_values.slice(0,10).reverse()
+        var sampleOTULabel = firstElement.otu_labels.slice(0,10).reverse()
+        console.log(sampleValues);
+        console.log(sampleOTUID);
+        console.log(sampleOTULabel);
 
-//         data.sort(function(a, b) {
-//             return parseFloat(b.sample_values) - parseFloat(a.sample_values);
-//         });
+        // Create the trace for belly button data
+    var trace1 = {
+        x: sampleValues,
+        y: sampleOTUID,
+        text: sampleOTULabel,
+        name: "Bacteria",
+        type: "bar",
+        orientation: "h"
+    };
 
-//         // Slice the first 10 objects for plotting
-//         data = data.slice(0,10);
+    // specify chart data
+    var chartData = [trace1];
 
-//         // Reverse the array b/c of Plotly defaults
-//         data = data.reverse();
+    // Apply the group bar mode to the layout
+    var layout = {
+        margin: {
+            l: 100,
+            r: 100,
+            t: 100,
+            b: 100
+        },
+        height: 500,
+        width: 300
+    };
 
-// // Create a horizontal bar chart with a dropdown menu to display the top 
-// // 10 OTUs found in that individual.
+    // Render the plot to the appropriate div tag
+    Plotly.newPlot("bar", chartData, layout);
 
-// // Use sample_values as the values for the bar chart.
-// // Narrow to top 10 results per id
+    var trace2 = {
+        x: firstElement.otu_ids,
+        y: firstElement.sample_values,
+        text: firstElement.otu_labels,
+        mode: "markers", marker: {
+            color: firstElement.otu_ids,
+            size: firstElement.sample_values
+        }
+    }
 
-// // Use otu_ids as the labels for the bar chart.
+    // specify chart data
+    var bubbleChartTrace = [trace2];
 
-//     // Create the trace for belly button data
-//     var trace1 = {
-//         x: data.map(row => row.sample_values),
-//         y: data.map(row => row.otu_labels),
-//         name: "Bacteria",
-//         type: "bar",
-//         orientation: "h"
-//     };
+    // Apply the group bar mode to the layout
+    var layout2 = {
+        title: "Belly Button Bubble Chart"
+    };
 
-//     // specify chart data
-//     var chartData = [trace1];
-
-//     // Use otu_labels as the hovertext for the chart.
-//     // Apply the group bar mode to the layout
-//     var layout = {
-//         margin: {
-//             l: 100,
-//             r: 100,
-//             t: 100,
-//             b: 100
-//         }
-//     };
-
-//     // Render the plot to the appropriate div tag
-//     Plotly.newPlot("bar", chartData, layout);
-    });
+    // Render the plot to the appropriate div tag
+    Plotly.newPlot("bubble", bubbleChartTrace, layout2);
+});
 };
