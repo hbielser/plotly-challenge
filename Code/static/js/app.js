@@ -74,7 +74,7 @@ function Charts(userData) {
             b: 100
         },
         height: 500,
-        width: 300
+        width: 700
     };
 
     // Render the plot to the appropriate div tag
